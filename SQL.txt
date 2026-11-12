@@ -1,0 +1,86 @@
+Lenovo@LAPTOP-AEGG8PKO ~
+$ ssh-keygen
+Generating public/private ed25519 key pair.
+Enter file in which to save the key (/cygdrive/c/Users/Lenovo/.ssh/id_ed25519):
+/cygdrive/c/Users/Lenovo/.ssh/id_ed25519 already exists.
+Overwrite (y/n)? n
+Lenovo@LAPTOP-AEGG8PKO ~
+$ cat ~/.ssh/id_ed25519.pub
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIYFveeRkQgHBBdMqFY1ePa5MCM7WqRvbalo0oY6I57i Lenovo@LAPTOP-AEGG8PKO
+Lenovo@LAPTOP-AEGG8PKO ~
+$ ssh 7a8b528f-a8c0-463d-a41a-5eac2ee97e53@serverhub.praktikum-services.ru -p 4554
+morty@server-7a8b528f-a8c0-463d-a41a-5eac2ee97e53:~$ psql -U morty -d scooter_rent
+Password for user morty:
+psql (11.18 (Debian 11.18-0+deb10u1))
+Type "help" for help.
+scooter_rent=#  SELECT COUNT(*) FROM "Orders" WHERE "inDelivery" = TRUE;
+ count
+-------
+     0
+(1 row)
+
+scooter_rent=# SELECT COUNT(*) FROM "Orders";
+ count
+-------
+     0
+(1 row)
+
+scooter_rent=# SELECT * FROM "Couriers";
+ id | login | passwordHash | firstName | createdAt | updatedAt
+----+-------+--------------+-----------+-----------+-----------
+(0 rows)
+scooter_rent=# \d "Couriers"
+                                         Table "public.Couriers"
+    Column    |           Type           | Collation | Nullable |                Default
+--------------+--------------------------+-----------+----------+----------------------------------------
+ id           | integer                  |           | not null | nextval('"Couriers_id_seq"'::regclass)
+ login        | character varying(255)   |           | not null |
+ passwordHash | character varying(255)   |           |          |
+ firstName    | character varying(255)   |           |          |
+ createdAt    | timestamp with time zone |           | not null |
+ updatedAt    | timestamp with time zone |           | not null |
+Indexes:
+    "Couriers_pkey" PRIMARY KEY, btree (id)
+    "Couriers_login_key" UNIQUE CONSTRAINT, btree (login)
+scooter_rent=# INSERT INTO "Couriers" ("login", "firstName", "passwordHash", "createdAt", "updatedAt") VALUES ('test_login', 'Ivan', 'hash123', NOW(), NOW());
+INSERT 0 1
+scooter_rent=# \d "Orders"
+                                         Table "public.Orders"
+    Column    |           Type           | Collation | Nullable |               Default
+--------------+--------------------------+-----------+----------+--------------------------------------
+ id           | integer                  |           | not null | nextval('"Orders_id_seq"'::regclass)
+ courierId    | integer                  |           |          |
+ firstName    | character varying(255)   |           |          |
+ lastName     | character varying(255)   |           |          |
+ address      | character varying(255)   |           |          |
+ metroStation | character varying(255)   |           |          |
+ phone        | character varying(255)   |           |          |
+ rentTime     | integer                  |           |          |
+ deliveryDate | timestamp with time zone |           |          |
+ track        | integer                  |           |          |
+ inDelivery   | boolean                  |           |          |
+ color        | character varying(255)[] |           |          |
+ comment      | character varying(255)   |           |          |
+ cancelled    | boolean                  |           |          |
+ finished     | boolean                  |           |          |
+ createdAt    | timestamp with time zone |           | not null |
+ updatedAt    | timestamp with time zone |           | not null |
+Indexes:
+    "Orders_pkey" PRIMARY KEY, btree (id)
+scooter_rent=# SELECT id FROM "Couriers" WHERE "login" = 'test_login';
+ id
+----
+  3
+(1 row)
+scooter_rent=# INSERT INTO "Orders" ("courierId", "inDelivery", "track", "createdAt", "updatedAt") VALUES (3, TRUE, 999, NOW(), NOW());
+INSERT 0 1
+scooter_rent=# SELECT "Couriers"."login", COUNT(*) AS order_count FROM "Couriers" INNER JOIN "Orders" ON "Couriers"."id" = "Orders"."courierId" WHERE "Orders"."inDelivery" = TRUE GROUP BY "Couriers"."login";
+   login    | order_count
+------------+-------------
+ test_login |           1
+(1 row)
+scooter_rent=# SELECT "track", CASE WHEN "finished" = TRUE THEN 2 WHEN "cancelled" = TRUE THEN -1 WHEN "inDelivery" = TRUE THEN 1 ELSE 0 END AS "status" FROM "Orders";
+ track | status
+-------+--------
+   999 |      1
+(1 row)
