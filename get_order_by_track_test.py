@@ -8,7 +8,6 @@ def test_create_order():
     assert "track" in response.json()
 
 def test_get_order_by_track():
-    # Создаём заказ внутри теста, чтобы он был самодостаточным
     create_response = create_order(order_data)
     track = create_response.json()["track"]
 
